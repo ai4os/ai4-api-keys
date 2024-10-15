@@ -13,11 +13,12 @@ repository = "https://github.com/ai4os/ai4-api-keys"
 "Bug Tracker" = "https://github.com/ai4os/ai4-api-keys/issues"
 
 [tool.poetry.scripts]
-
+ai4-api-keys = "ai4_api_keys.cli:app"
 
 [tool.poetry.dependencies]
 python = "^3.12"
 cryptography = "^43.0.1"
+typer = "^0.12.5"
 
 [tool.poetry.group.dev.dependencies]
 tox = "^4.21.2"
