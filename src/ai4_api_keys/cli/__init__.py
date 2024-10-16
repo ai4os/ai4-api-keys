@@ -3,12 +3,12 @@
 import typer
 
 import ai4_api_keys
-import ai4_api_keys.keys
-import ai4_api_keys.fernet
+from ai4_api_keys.cli import fernet as fernet_cli
+from ai4_api_keys.cli import keys as keys_cli
 
 app = typer.Typer(help="AI4 API Keys management CLI.")
-app.add_typer(ai4_api_keys.fernet.app, name="fernet")
-app.add_typer(ai4_api_keys.keys.app, name="keys")
+app.add_typer(fernet_cli.app, name="fernet")
+app.add_typer(keys_cli.app, name="keys")
 
 
 def version_callback(value: bool):
