@@ -2,6 +2,7 @@
 
 import pytest
 
+from ai4_api_keys import exceptions
 from ai4_api_keys import keys
 
 
@@ -19,7 +20,7 @@ def test_create_key(key):
     new_key = keys.create(key, scope, level)
     assert new_key
 
-    assert keys.validate(key, new_key, scope)
+    assert keys.validate(key, new_key, scope) is None
 
 
 @pytest.fixture()
@@ -36,18 +37,21 @@ def test_validate_key(key, valid_api_key):
     """Test the keys.validate function."""
     scope = "ai4eosc"
 
-    assert keys.validate(key, valid_api_key, scope)
+    assert keys.validate(key, valid_api_key, scope) is None
 
 
 def test_validate_key_invalid(key):
     """Test the keys.validate function with an invalid key."""
     scope = "ai4eosc"
 
-    assert not keys.validate(key, "invalid_key", scope)
+    # This raises an exception
+    with pytest.raises(exceptions.InvalidKeyError):
+        keys.validate(key, "invalid_key", scope)
 
 
 def test_validate_key_invalid_scope(key, valid_api_key):
     """Test the keys.validate function with an invalid scope."""
     scope = "invalid_scope"
 
-    assert not keys.validate(key, valid_api_key, scope)
+    with pytest.raises(exceptions.InvalidScopeError):
+        keys.validate(key, valid_api_key, scope)

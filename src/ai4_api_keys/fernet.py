@@ -1,6 +1,5 @@
 """Manage AI4 Fernet signing keys."""
 
-
 import cryptography.fernet
 
 

@@ -6,6 +6,7 @@ from typing import Optional
 
 import typer
 
+from ai4_api_keys import exceptions
 import ai4_api_keys.fernet
 import ai4_api_keys.keys
 
@@ -69,15 +70,15 @@ def validate_cli(
     if key is None:
         raise typer.BadParameter("Either --key-file or --key must be provided.")
 
-    valid = ai4_api_keys.keys.validate(key, api_key, scope)
-
-    if valid:
+    try:
+        ai4_api_keys.keys.validate(key, api_key, scope)
+    except exceptions.BaseError as e:
         if not quiet:
-            typer.echo("API key is valid.")
+            typer.echo(e)
+        raise typer.Exit(code=1)
     else:
         if not quiet:
-            typer.echo("API key is invalid.")
-        raise typer.Exit(code=1)
+            typer.echo("API key is valid.")
 
 
 @app.command(name="dump")
@@ -107,11 +108,10 @@ def dump_key_contents(
     if key is None:
         raise typer.BadParameter("Either --key-file or --key must be provided.")
 
-    valid = ai4_api_keys.keys.validate(key, api_key, scope)
-
-    if valid:
+    try:
+        ai4_api_keys.keys.validate(key, api_key, scope)
         decrypted = ai4_api_keys.fernet.decrypt(key, api_key)
         typer.echo(decrypted)
-    else:
-        typer.echo("API key is invalid.")
+    except exceptions.BaseError as e:
+        typer.echo(e)
         raise typer.Exit(code=1)

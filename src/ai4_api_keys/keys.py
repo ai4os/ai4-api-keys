@@ -4,6 +4,7 @@ import enum
 import json
 import secrets
 
+from ai4_api_keys import exceptions
 from ai4_api_keys import fernet
 
 
@@ -14,6 +15,10 @@ class APILevels(str, enum.Enum):
     SILVER = "silver"
     BRONZE = "bronze"
     PLATINUM = "platinum"
+
+    def __str__(self):
+        """Return the name of the level."""
+        return f"{self.name}"
 
 
 def create(key: str, scope: str, level: APILevels) -> str:
@@ -33,20 +38,28 @@ def create(key: str, scope: str, level: APILevels) -> str:
     return fernet.encrypt(key, json.dumps(message))
 
 
-def validate(key: str, api_key: str, scope: str) -> bool:
+def validate(key: str, api_key: str, scope: str) -> None:
     """Validate an API key.
 
     :param key: The Fernet key to use.
     :param api_key: The API key to validate.
     :param scope: The scope of the API key.
-    :return: Whether the API key is valid.
+
+    This function raises an exception if the key is invalid.
     """
     try:
         decrypted = fernet.decrypt(key, api_key)
     except Exception:
-        return False
+        raise exceptions.InvalidKeyError(api_key)
 
     message = json.loads(decrypted)
     if message["scope"] != scope:
-        return False
-    return True
+        raise exceptions.InvalidScopeError(message["scope"], scope)
+
+    # NOTE(aloga): we need to use this, "level in Enum" does not work with member values
+    # before Python 3.12
+    levels = [i.value for i in dict(APILevels.__members__).values()]
+    if message["level"] not in levels:
+        # MyPy complains about this line, but it's correct with
+        # "InvalidLevelError" has incompatible type "type[APILevels]"; expected "Enum"
+        raise exceptions.InvalidLevelError(message["level"], APILevels)  # type: ignore
