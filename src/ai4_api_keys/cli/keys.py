@@ -6,6 +6,7 @@ from typing import Optional
 
 import typer
 
+import ai4_api_keys.fernet
 import ai4_api_keys.keys
 
 app = typer.Typer(help="AI4 API Keys management CLI.")
@@ -76,4 +77,41 @@ def validate_cli(
     else:
         if not quiet:
             typer.echo("API key is invalid.")
+        raise typer.Exit(code=1)
+
+
+@app.command(name="dump")
+def dump_key_contents(
+    key_file: Annotated[
+        Optional[pathlib.Path],
+        typer.Option("--key-file", "-k", help="Read fernet key from a file."),
+    ] = None,
+    key: Annotated[
+        Optional[str], typer.Option("--key", "-K", help="Use a specific fernet key.")
+    ] = None,
+    scope: str = typer.Argument("ai4eosc", help="The scope of the API key."),
+    api_key: str = typer.Argument(..., help="The API key to dump."),
+) -> None:
+    """Validate and dump the key contents (CLI).
+
+    If the key is valid, the contents will be printed to the console. Otherwise the
+    command will exit with a non-zero status code.
+    """
+    if key_file and key:
+        raise typer.BadParameter("Cannot use both --key-file and --key.")
+
+    if key_file is not None:
+        with open(key_file, "r") as f:
+            key = f.read().strip()
+
+    if key is None:
+        raise typer.BadParameter("Either --key-file or --key must be provided.")
+
+    valid = ai4_api_keys.keys.validate(key, api_key, scope)
+
+    if valid:
+        decrypted = ai4_api_keys.fernet.decrypt(key, api_key)
+        typer.echo(decrypted)
+    else:
+        typer.echo("API key is invalid.")
         raise typer.Exit(code=1)
